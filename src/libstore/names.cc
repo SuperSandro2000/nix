@@ -26,12 +26,19 @@ DrvName::DrvName()
    '2.0.48'). */
 DrvName::DrvName(std::string_view s) : hits(0)
 {
+    const std::string unstablePrefix = "-unstable";
+    const auto sub = unstablePrefix.size();
     name = fullName = std::string(s);
     for (unsigned int i = 0; i < s.size(); ++i) {
         /* !!! isalpha/isdigit are affected by the locale. */
         if (s[i] == '-' && i + 1 < s.size() && !isalpha(s[i + 1])) {
-            name = s.substr(0, i);
-            version = s.substr(i + 1);
+            if (i > sub && (s.substr(i - sub, sub) == unstablePrefix)) {
+                name = s.substr(0, i - sub);
+                version = s.substr(i - sub + 1);
+            } else {
+                name = s.substr(0, i);
+                version = s.substr(i + 1);
+            }
             break;
         }
     }
