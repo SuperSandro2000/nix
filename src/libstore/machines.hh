@@ -16,6 +16,7 @@ struct Machine {
     const std::set<std::string> supportedFeatures;
     const std::set<std::string> mandatoryFeatures;
     const std::string sshPublicHostKey;
+    const unsigned int maxBigJobs;
     bool enabled = true;
 
     bool allSupported(const std::set<std::string> & features) const;
@@ -29,7 +30,8 @@ struct Machine {
         decltype(speedFactor) speedFactor,
         decltype(supportedFeatures) supportedFeatures,
         decltype(mandatoryFeatures) mandatoryFeatures,
-        decltype(sshPublicHostKey) sshPublicHostKey);
+        decltype(sshPublicHostKey) sshPublicHostKey,
+        decltype(maxBigJobs) maxBigJobs);
 
     ref<Store> openStore() const;
 };

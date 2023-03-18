@@ -45,10 +45,11 @@ TEST(machines, getMachinesUriOnly) {
     EXPECT_THAT(actual[0], Field(&Machine::supportedFeatures, SizeIs(0)));
     EXPECT_THAT(actual[0], Field(&Machine::mandatoryFeatures, SizeIs(0)));
     EXPECT_THAT(actual[0], Field(&Machine::sshPublicHostKey, SizeIs(0)));
+    EXPECT_THAT(actual[0], Field(&Machine::maxBigJobs, Eq(1)));
 }
 
 TEST(machines, getMachinesDefaults) {
-    settings.builders = "nix@scratchy.labs.cs.uu.nl - - - - - - -";
+    settings.builders = "nix@scratchy.labs.cs.uu.nl - - - - - - - -";
     Machines actual = getMachines();
     ASSERT_THAT(actual, SizeIs(1));
     EXPECT_THAT(actual[0], Field(&Machine::storeUri, Eq("ssh://nix@scratchy.labs.cs.uu.nl")));
@@ -59,6 +60,7 @@ TEST(machines, getMachinesDefaults) {
     EXPECT_THAT(actual[0], Field(&Machine::supportedFeatures, SizeIs(0)));
     EXPECT_THAT(actual[0], Field(&Machine::mandatoryFeatures, SizeIs(0)));
     EXPECT_THAT(actual[0], Field(&Machine::sshPublicHostKey, SizeIs(0)));
+    EXPECT_THAT(actual[0], Field(&Machine::maxBigJobs, Eq(1)));
 }
 
 TEST(machines, getMachinesWithNewLineSeparator) {
@@ -78,9 +80,9 @@ TEST(machines, getMachinesWithSemicolonSeparator) {
 }
 
 TEST(machines, getMachinesWithCorrectCompleteSingleBuilder) {
-    settings.builders = "nix@scratchy.labs.cs.uu.nl     i686-linux      "
-                        "/home/nix/.ssh/id_scratchy_auto        8 3 kvm "
-                        "benchmark SSH+HOST+PUBLIC+KEY+BASE64+ENCODED==";
+    settings.builders = "nix@scratchy.labs.cs.uu.nl     i686-linux       "
+                        "/home/nix/.ssh/id_scratchy_auto        8 3 kvm  "
+                        "benchmark SSH+HOST+PUBLIC+KEY+BASE64+ENCODED== 2";
     Machines actual = getMachines();
     ASSERT_THAT(actual, SizeIs(1));
     EXPECT_THAT(actual[0], Field(&Machine::storeUri, EndsWith("nix@scratchy.labs.cs.uu.nl")));
@@ -91,14 +93,15 @@ TEST(machines, getMachinesWithCorrectCompleteSingleBuilder) {
     EXPECT_THAT(actual[0], Field(&Machine::supportedFeatures, ElementsAre("kvm")));
     EXPECT_THAT(actual[0], Field(&Machine::mandatoryFeatures, ElementsAre("benchmark")));
     EXPECT_THAT(actual[0], Field(&Machine::sshPublicHostKey, Eq("SSH+HOST+PUBLIC+KEY+BASE64+ENCODED==")));
+    EXPECT_THAT(actual[0], Field(&Machine::maxBigJobs, Eq(2)));
 }
 
 TEST(machines,
-     getMachinesWithCorrectCompleteSingleBuilderWithTabColumnDelimiter) {
+    getMachinesWithCorrectCompleteSingleBuilderWithTabColumnDelimiter) {
     settings.builders =
         "nix@scratchy.labs.cs.uu.nl\ti686-linux\t/home/nix/.ssh/"
         "id_scratchy_auto\t8\t3\tkvm\tbenchmark\tSSH+HOST+PUBLIC+"
-        "KEY+BASE64+ENCODED==";
+        "KEY+BASE64+ENCODED==\t2";
     Machines actual = getMachines();
     ASSERT_THAT(actual, SizeIs(1));
     EXPECT_THAT(actual[0], Field(&Machine::storeUri, EndsWith("nix@scratchy.labs.cs.uu.nl")));
@@ -109,6 +112,7 @@ TEST(machines,
     EXPECT_THAT(actual[0], Field(&Machine::supportedFeatures, ElementsAre("kvm")));
     EXPECT_THAT(actual[0], Field(&Machine::mandatoryFeatures, ElementsAre("benchmark")));
     EXPECT_THAT(actual[0], Field(&Machine::sshPublicHostKey, Eq("SSH+HOST+PUBLIC+KEY+BASE64+ENCODED==")));
+    EXPECT_THAT(actual[0], Field(&Machine::maxBigJobs, Eq(2)));
 }
 
 TEST(machines, getMachinesWithMultiOptions) {

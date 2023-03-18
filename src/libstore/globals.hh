@@ -134,6 +134,14 @@ public:
         )",
         {"build-max-jobs"}};
 
+    MaxBuildJobsSetting maxBigBuildJobs{
+        this, 1, "max-big-jobs",
+        R"(
+          This option is the same as `max-jobs` but only applies to big-parallel builds.
+          It can be overridden using the `--max-big-jobs` (`-j`) command line switch.
+        )",
+        {"build-max-big-jobs"}};
+
     Setting<unsigned int> buildCores{
         this,
         getDefaultCores(),
@@ -149,6 +157,18 @@ public:
           the builder should use all available CPU cores in the system.
         )",
         {"build-cores"}, false};
+
+    Setting<unsigned int> bigBuildCores{
+        this,
+        getDefaultCores(),
+        "big-cores",
+        R"(
+          This option is the same as `cores` but only applies to big-parallel builds.
+          It can be overridden using the `--big-cores`
+          command line switch and defaults to `1`. The value `0` means that
+          the builder should use all available CPU cores in the system.
+        )",
+        {"big-build-cores"}, false};
 
     /* Read-only mode.  Don't copy stuff to the store, don't change
        the database. */

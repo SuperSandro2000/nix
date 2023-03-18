@@ -46,6 +46,13 @@ static bool allSupportedLocally(Store & store, const std::set<std::string>& requ
     return true;
 }
 
+static bool isBigBuild(Store & store, const std::set<std::string>& requiredFeatures) {
+    for (auto & feature : requiredFeatures)
+        if (feature == "big-parallel" && store.systemFeatures.get().count(feature))
+            return true;
+    return false;
+}
+
 static int main_build_remote(int argc, char * * argv)
 {
     {
@@ -73,6 +80,7 @@ static int main_build_remote(int argc, char * * argv)
         }
 
         auto maxBuildJobs = settings.maxBuildJobs;
+        auto maxBigBuildJobs = settings.maxBigBuildJobs;
         settings.maxBuildJobs.set("1"); // hack to make tests with local?root= work
 
         initPlugins();
@@ -113,9 +121,11 @@ static int main_build_remote(int argc, char * * argv)
             drvPath = store->parseStorePath(readString(source));
             auto requiredFeatures = readStrings<std::set<std::string>>(source);
 
+            auto bigBuildForDrv = isBigBuild(*store, requiredFeatures);
+            auto maxBuildJobsForDrv = bigBuildForDrv ? maxBigBuildJobs : maxBuildJobs;
             /* It would be possible to build locally after some builds clear out,
                so don't show the warning now: */
-            bool couldBuildLocally = maxBuildJobs > 0
+            bool couldBuildLocally = maxBuildJobsForDrv > 0
                  &&  (  neededSystem == settings.thisSystem
                      || settings.extraPlatforms.get().count(neededSystem) > 0)
                  &&  allSupportedLocally(*store, requiredFeatures);
@@ -148,7 +158,8 @@ static int main_build_remote(int argc, char * * argv)
                         rightType = true;
                         AutoCloseFD free;
                         uint64_t load = 0;
-                        for (uint64_t slot = 0; slot < m.maxJobs; ++slot) {
+                        auto machineMaxBuildJobs = bigBuildForDrv ? m.maxBigJobs : m.maxJobs;
+                        for (uint64_t slot = 0; slot < machineMaxBuildJobs; ++slot) {
                             auto slotLock = openSlotLock(m, slot);
                             if (lockFile(slotLock.get(), ltWrite, false)) {
                                 if (!free) {
@@ -193,10 +204,10 @@ static int main_build_remote(int argc, char * * argv)
                             "Failed to find a machine for remote build!\n"
                             "derivation: %s\nrequired (system, features): (%s, [%s])";
                         errorText += "\n%s available machines:";
-                        errorText += "\n(systems, maxjobs, supportedFeatures, mandatoryFeatures)";
+                        errorText += "\n(systems, maxjobs, supportedFeatures, mandatoryFeatures, maxBigJobs)";
 
                         for (unsigned int i = 0; i < machines.size(); ++i)
-                            errorText += "\n([%s], %s, [%s], [%s])";
+                            errorText += "\n([%s], %s, [%s], [%s], %s)";
 
                         // add the template values.
                         std::string drvstr;
@@ -217,7 +228,8 @@ static int main_build_remote(int argc, char * * argv)
                                 % concatStringsSep<std::vector<std::string>>(", ", m.systemTypes)
                                 % m.maxJobs
                                 % concatStringsSep<StringSet>(", ", m.supportedFeatures)
-                                % concatStringsSep<StringSet>(", ", m.mandatoryFeatures);
+                                % concatStringsSep<StringSet>(", ", m.mandatoryFeatures)
+                                % m.maxBigJobs;
 
                         printMsg(couldBuildLocally ? lvlChatty : lvlWarn, error);
 

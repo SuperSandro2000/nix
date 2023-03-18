@@ -14,7 +14,8 @@ Machine::Machine(decltype(storeUri) storeUri,
     decltype(speedFactor) speedFactor,
     decltype(supportedFeatures) supportedFeatures,
     decltype(mandatoryFeatures) mandatoryFeatures,
-    decltype(sshPublicHostKey) sshPublicHostKey) :
+    decltype(sshPublicHostKey) sshPublicHostKey,
+    decltype(maxBigJobs) maxBigJobs) :
     storeUri(
         // Backwards compatibility: if the URI is schemeless, is not a path,
         // and is not one of the special store connection words, prepend
@@ -36,7 +37,8 @@ Machine::Machine(decltype(storeUri) storeUri,
     speedFactor(std::max(1U, speedFactor)),
     supportedFeatures(supportedFeatures),
     mandatoryFeatures(mandatoryFeatures),
-    sshPublicHostKey(sshPublicHostKey)
+    sshPublicHostKey(sshPublicHostKey),
+    maxBigJobs(maxBigJobs)
 {}
 
 bool Machine::allSupported(const std::set<std::string> & features) const
@@ -152,7 +154,8 @@ static Machine parseBuilderLine(const std::string & line)
         isSet(4) ? parseUnsignedIntField(4) : 1U,
         isSet(5) ? tokenizeString<std::set<std::string>>(tokens[5], ",") : std::set<std::string>{},
         isSet(6) ? tokenizeString<std::set<std::string>>(tokens[6], ",") : std::set<std::string>{},
-        isSet(7) ? ensureBase64(7) : ""
+        isSet(7) ? ensureBase64(7) : "",
+        isSet(8) ? parseUnsignedIntField(8) : 1U
     };
 }
 
